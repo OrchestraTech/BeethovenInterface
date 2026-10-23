@@ -21,6 +21,7 @@ pip install mediapipe opencv-python pyautogui numpy
 ```
 
 Download the face_landmarker.task model from the official MediaPipe website and place it in the same folder as the script.
+Also dont forget to put FurEliseNN9717.tar in the same folder as the script.
 
 Run:
 
