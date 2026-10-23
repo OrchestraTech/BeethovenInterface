@@ -1,30 +1,36 @@
-# BeethovenInterface
+BeethovenInterface
+
 Mediapipe Based Eye To Mouse Interface
 
-Управление курсором мыши и кликами через моргание с помощью веб-камеры и MediaPipe Face Landmarker.
+Control your mouse cursor and clicks by blinking, using a webcam and MediaPipe Face Landmarker.
 
-Как это работает
+How it works
 
-Программа отслеживает положение век и зрачков. На основе Eye Aspect Ratio (EAR) определяет, закрыт глаз или открыт.
+The program tracks the position of eyelids and pupils. Based on the Eye Aspect Ratio (EAR), it determines whether the eye is closed or open.
 
-Оба глаза закрыты (дольше 1 сек) - левый клик мыши.
-Закрыт левый глаз - движение курсора за правым зрачком.
-Закрыт правый глаз (дольше 1 сек) - правый клик мыши.
+Both eyes closed (for more than 1 sec) -left mouse click.
+Left eye closed (for more than 1 sec) - cursor movement tracking the right pupil.
+Right eye closed (for more than 1 sec) — right mouse click.
 
-Установка и запуск
+Installation and Usage
 
-1. Установите зависимости:
-   ```bash
-   pip install mediapipe opencv-python pyautogui numpy
-   ```
-2. Скачайте модель face_landmarker.task с официального сайта MediaPipe и положите её в ту же папку, где находится скрипт.
-3. Запустите:
-   ```bash
-   python beathoven.py
-   ```
-4. При запуске будет звуковой сигнал. Смотрите в камеру в течение 20 секунд - идёт калибровка открытого положения глаз.
+Install dependencies:
 
-Ограничения
+```bash
+pip install mediapipe opencv-python pyautogui numpy
+```
 
-Работает только на Windows
-Требуется веб-камера.
+Download the face_landmarker.task model from the official MediaPipe website and place it in the same folder as the script.
+
+Run:
+
+```bash
+python beathoven.py
+```
+
+A sound signal will play on startup. Look at the camera for 20 seconds - the calibration of the open-eye position is in progress.
+
+Limitations
+
+Works only on Windows.
+Requires a webcam.
