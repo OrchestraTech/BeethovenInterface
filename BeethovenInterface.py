@@ -11,13 +11,13 @@ import os
 
 CLOSED_OPENED_TIME = 1
 
-#Избежание крашей при нахождении курсора в углах
+#To not crush in corners
 pyautogui.FAILSAFE = False
 
 class BeathovenTracker():
     def __init__(self):
         
-        #Чудо техники EAR
+        #EAR
         self.ear_time = time.time()
         self.left_open_ear = 0.3
         self.right_open_ear = 0.3
@@ -25,36 +25,34 @@ class BeathovenTracker():
         self.left_open_ear_data = []
         self.right_open_ear_data = []
         self.is_ready_to_compute_ear = 0
-        #Чудо техники EAR
 
-        #Переменные
+        #Variables
         self.we_are_starting = True
-        self.running = True#
-        self.latest_result = None#
-        self.eyes_closed_time = 0#
-        self.eyes_opened_time = 0#
-        self.ready_to_blink = False#
-        self.last_left_eye_center = None#
-        self.last_right_eye_center = None#
+        self.running = True
+        self.latest_result = None
+        self.eyes_closed_time = 0
+        self.eyes_opened_time = 0
+        self.ready_to_blink = False
+        self.last_left_eye_center = None
+        self.last_right_eye_center = None
         self.normal = (0,0)
         self.left_closed_time = 0
         self.left_closed_at_first_time = True
         self.last_left_eye_closed_time = 0       
         
-        #Количество стадий закрытости правого глаза
+        #For right eye
         self.right_studies_count = 0
         self.right_closed_time = 0
         self.right_closed_at_first_time = True
         self.last_right_eye_closed_time = 0
         self.can_do_sepcial = True
 
-        #Настройки для гугловской модели
+        #Mediapipe settings
         model_path = os.path.join(os.path.dirname(__file__), 'face_landmarker.task')
         BaseOptions = mp.tasks.BaseOptions
         FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
         VisionRunningMode = mp.tasks.vision.RunningMode
 
-        #Настройка гугловской модели
         self.options = FaceLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=model_path),
             running_mode=VisionRunningMode.LIVE_STREAM,
@@ -92,15 +90,14 @@ class BeathovenTracker():
                         self.we_are_starting = False
                         print("We are starting")
 
-                    #Ловим моргание
+                    #Blink capture
                     if self.latest_result and self.latest_result.face_landmarks:
                         for face_landmarks in self.latest_result.face_landmarks:
 
-                            #Берем левый и правый зрачки
                             self.last_left_eye_center = face_landmarks[473]
                             self.last_right_eye_center = face_landmarks[468]
 
-                            #Левый глаз
+                            #Left eye
                             lp1 = face_landmarks[362]
                             lp2 = face_landmarks[385]
                             lp3 = face_landmarks[387]
@@ -114,7 +111,7 @@ class BeathovenTracker():
                             
                             
                             
-                            #Правый глаз
+                            #Right eye
                             rp1 = face_landmarks[33]
                             rp2 = face_landmarks[160]
                             rp3 = face_landmarks[158]
@@ -144,14 +141,14 @@ class BeathovenTracker():
 
                             is_left_closed = True if self.left_ear < self.left_open_ear * 0.5 else False
                             is_right_closed = True if self.right_ear < self.right_open_ear * 0.5 else False
-                            #Оба закрыты
+                            #Boths closed
                             if (self.ready_to_blink == False and (is_left_closed) and (is_right_closed)):
                                 print("BOTH CLOSED")
                                 print(f"LEFT DISTANCE: {self.left_ear}")
                                 print(f"RIGHT DISTANCE: {self.right_ear}")
                                 self.eyes_closed_time = current_time
                                 self.ready_to_blink = True
-                            #Оба открыты после закрытости
+                            #Both opened after closed
                             elif (self.ready_to_blink and (not is_left_closed) and (not is_right_closed)):
                                 print("BOTH OPENED AFTER CLOSE")
                                 self.eyes_opened_time = current_time
@@ -159,7 +156,7 @@ class BeathovenTracker():
                                     if abs(self.last_left_eye_closed_time - current_time) > CLOSED_OPENED_TIME*0.2 and abs(self.last_right_eye_closed_time - current_time) > CLOSED_OPENED_TIME*0.2:
                                         self.click_from_blink()
                                 self.ready_to_blink = False
-                            #Левый открыт, правый закрыт
+                            #Left closed right opened
                             elif (is_left_closed and not is_right_closed):
                                 print(f"LEFT CLOSED RIGHT OPENED {self.left_ear}")
                                 self.last_left_eye_closed_time = current_time
@@ -179,22 +176,22 @@ class BeathovenTracker():
                                         lr = int(-offset_x * SPEED)
                                         ud = int(offset_y * SPEED)
                                         pyautogui.moveRel(lr, ud)
-                            #Правый открыт, левый закрыт
+                            #Left opened right closed
                             elif (not is_left_closed) and (is_right_closed):
-                                print(f"|||LEFT OPENED RIGHT CLOSED {self.right_ear}")
+                                print(f"LEFT OPENED RIGHT CLOSED {self.right_ear}")
                                 self.last_right_eye_closed_time = current_time
                                 if self.right_closed_at_first_time:
                                     self.right_closed_at_first_time = False
                                     self.right_closed_time = current_time
                                     continue
                                 if abs(self.right_closed_time - current_time) > 1:
-                                    #Нажатие правой кнопкой мыши
+                                    #Right mouse
                                     if self.can_do_sepcial:
                                         self.right_click_from_blink()
                                         self.can_do_sepcial = False
                                     print("FIRST")
                                     pass
-                            #Берем нормаль
+                            #Take base position
                             elif (not is_left_closed) and (not is_right_closed):
                                 print(f"BOTH OPENED LEFT DISTANCE: {self.left_ear} RIGHT DISTANCE: {self.right_ear}")
                                 self.ready_to_blink = False
