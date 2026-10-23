@@ -5,11 +5,11 @@ import cv2
 import numpy as np
 import time
 import pyautogui
-from BeathovenConsts import *
 import winsound
 import os
 
 
+CLOSED_OPENED_TIME = 1
 
 #Избежание крашей при нахождении курсора в углах
 pyautogui.FAILSAFE = False
