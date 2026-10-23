@@ -25,7 +25,7 @@ Download the face_landmarker.task model from the official MediaPipe website and 
 Run:
 
 ```bash
-python beathoven.py
+python BeethovenInterface.py
 ```
 
 A sound signal will play on startup. Look at the camera for 20 seconds - the calibration of the open-eye position is in progress.
