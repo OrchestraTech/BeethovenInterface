@@ -1,6 +1,5 @@
 # BeethovenInterface
 Mediapipe Based Eye To Mouse Interface
-BeathovenTracker
 
 Управление курсором мыши и кликами через моргание с помощью веб-камеры и MediaPipe Face Landmarker.
 
