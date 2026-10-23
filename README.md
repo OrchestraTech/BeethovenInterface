@@ -17,7 +17,7 @@ Installation and Usage
 Install dependencies:
 
 ```bash
-pip install mediapipe opencv-python pyautogui numpy
+pip install mediapipe opencv-python pyautogui torch
 ```
 
 Download the face_landmarker.task model from the official MediaPipe website and place it in the same folder as the script.
