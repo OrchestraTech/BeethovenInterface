@@ -1,18 +1,15 @@
 import mediapipe as mp
-from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import cv2
-import numpy as np
 import time
 import pyautogui
 import winsound
 import os
 import torch.nn as nn
 import torch
-from PIL import Image
 
 
-CLOSED_OPENED_TIME = 0.3
+CLOSED_OPENED_TIME = 1
 
 #To not crush in corners
 pyautogui.FAILSAFE = False
@@ -41,10 +38,6 @@ class BeethovenTracker():
         self.eye_model.eval()
 
         #Variables
-        self.ALPHA = 0.1
-        self.smooth_x = None
-        self.smooth_y = None
-        self.we_are_starting = True
         self.running = True
         self.latest_result = None
         self.eyes_closed_time = 0
@@ -59,7 +52,6 @@ class BeethovenTracker():
         self.PAD = 20
         
         #For right eye
-        self.right_studies_count = 0
         self.right_closed_time = 0
         self.right_closed_at_first_time = True
         self.last_right_eye_closed_time = 0
@@ -109,7 +101,7 @@ class BeethovenTracker():
 
                             h, w, _ = frame.shape
 
-                            print("")
+                            #print("")
                             #Left eye
                             lp1 = 388
                             lp2 = 384
@@ -129,8 +121,7 @@ class BeethovenTracker():
                             with torch.no_grad():
                                 predictiont = self.eye_model(tensor).item()
                             is_left_closed = predictiont < 0.6
-                            print(f"Prob: {predictiont:.3f} |L Closed: {is_left_closed}")
-                            cv2.imshow("Left eye", eye_crop)
+                            #print(f"Prob: {predictiont:.3f} |L Closed: {is_left_closed}")
                             
                             #Right eye
                             rp1 = 157
@@ -151,10 +142,7 @@ class BeethovenTracker():
                             with torch.no_grad():
                                 predictiont = self.eye_model(tensor).item()
                             is_right_closed = predictiont < 0.6
-                            print(f"Prob: {predictiont:.3f} |R Closed: {is_right_closed}")
-                            cv2.imshow("Right eye", eye_crop)
-
-
+                            #print(f"Prob: {predictiont:.3f} |R Closed: {is_right_closed}")
 
                             #Boths closed
                             if (self.ready_to_blink == False and (is_left_closed) and (is_right_closed)):
