@@ -7,6 +7,7 @@ import time
 import pyautogui
 from BeathovenConsts import *
 import winsound
+import os
 
 
 
@@ -48,7 +49,7 @@ class BeathovenTracker():
         self.can_do_sepcial = True
 
         #Настройки для гугловской модели
-        model_path = r'C:\Users\Timofei\Desktop\CV\MediaPipeModels\FaceLandmarkerModel\face_landmarker.task'
+        model_path = os.path.join(os.path.dirname(__file__), 'face_landmarker.task')
         BaseOptions = mp.tasks.BaseOptions
         FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
         VisionRunningMode = mp.tasks.vision.RunningMode
