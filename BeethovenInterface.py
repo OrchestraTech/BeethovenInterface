@@ -1,4 +1,4 @@
-﻿import mediapipe as mp
+import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import cv2
@@ -7,26 +7,43 @@ import time
 import pyautogui
 import winsound
 import os
+import torch.nn as nn
+import torch
+from PIL import Image
 
 
-CLOSED_OPENED_TIME = 1
+CLOSED_OPENED_TIME = 0.3
 
 #To not crush in corners
 pyautogui.FAILSAFE = False
 
-class BeathovenTracker():
+class BeethovenTracker():
     def __init__(self):
-        
-        #EAR
-        self.ear_time = time.time()
-        self.left_open_ear = 0.3
-        self.right_open_ear = 0.3
-        self.is_ready_to_take_open_ear = True
-        self.left_open_ear_data = []
-        self.right_open_ear_data = []
-        self.is_ready_to_compute_ear = 0
+        #FurEliseNN
+        self.eye_model = nn.Sequential(
+        nn.Conv2d(3, 32, 3, padding="same"),
+        nn.ReLU(),
+        nn.MaxPool2d(2),
+        nn.Conv2d(32, 8, 3, padding="same"),
+        nn.ReLU(),
+        nn.MaxPool2d(2),
+        nn.Conv2d(8, 4, 3, padding="same"),
+        nn.ReLU(),
+        nn.MaxPool2d(2),
+        nn.Flatten(),
+        nn.Linear(484, 128),
+        nn.ReLU(),
+        nn.Dropout(p=0.5),
+        nn.Linear(128, 1),
+        nn.Sigmoid())
+        model_path = os.path.join(os.path.dirname(__file__), 'FurEliseNN9717.tar')
+        self.eye_model.load_state_dict(torch.load(model_path, map_location='cpu', weights_only=True))
+        self.eye_model.eval()
 
         #Variables
+        self.ALPHA = 0.1
+        self.smooth_x = None
+        self.smooth_y = None
         self.we_are_starting = True
         self.running = True
         self.latest_result = None
@@ -38,7 +55,8 @@ class BeathovenTracker():
         self.normal = (0,0)
         self.left_closed_time = 0
         self.left_closed_at_first_time = True
-        self.last_left_eye_closed_time = 0       
+        self.last_left_eye_closed_time = 0  
+        self.PAD = 20
         
         #For right eye
         self.right_studies_count = 0
@@ -73,10 +91,6 @@ class BeathovenTracker():
                 self.capture = cv2.VideoCapture(0)
             while self.running:
                     current_time = time.time()
-                    if abs(current_time - self.ear_time) > 20 and self.is_ready_to_take_open_ear:
-                        self.is_ready_to_take_open_ear = False
-                        self.is_ready_to_compute_ear += 1
-                        winsound.Beep(1000,500)
                     ret, frame = self.capture.read()
                     if not ret:
                         break;
@@ -86,10 +100,6 @@ class BeathovenTracker():
                     frame_timestamp_ms = int(time.time() * 1000)
                     landmarker.detect_async(mp_image, frame_timestamp_ms) 
 
-                    if self.we_are_starting:
-                        self.we_are_starting = False
-                        print("We are starting")
-
                     #Blink capture
                     if self.latest_result and self.latest_result.face_landmarks:
                         for face_landmarks in self.latest_result.face_landmarks:
@@ -97,60 +107,61 @@ class BeathovenTracker():
                             self.last_left_eye_center = face_landmarks[473]
                             self.last_right_eye_center = face_landmarks[468]
 
+                            h, w, _ = frame.shape
+
+                            print("")
                             #Left eye
-                            lp1 = face_landmarks[362]
-                            lp2 = face_landmarks[385]
-                            lp3 = face_landmarks[387]
-                            lp4 = face_landmarks[263]
-                            lp5 = face_landmarks[373]
-                            lp6 = face_landmarks[380]
-                            A = abs(lp2.y - lp6.y)
-                            B = abs(lp3.y - lp5.y)
-                            C = abs(lp1.x - lp4.x)
-                            self.left_ear = (A + B)/(2*C)
-                            
-                            
+                            lp1 = 388
+                            lp2 = 384
+                            lp3 = 390
+                            lp4 = 381
+                            l_pts = [lp1, lp2, lp3, lp4]
+                            xs = [int(face_landmarks[i].x * w) for i in l_pts]
+                            ys = [int(face_landmarks[i].y * h) for i in l_pts]
+                            x1, x2 = max(0, min(xs) - self.PAD), min(w, max(xs) + self.PAD)
+                            y1, y2 = max(0, min(ys) - self.PAD), min(h, max(ys) + self.PAD)
+                            eye_crop = frame[y1:y2, x1:x2]
+                            if eye_crop.size == 0:
+                                continue
+                            eye_crop = cv2.resize(eye_crop, (90, 90))
+                            eye_rgb = cv2.cvtColor(eye_crop, cv2.COLOR_BGR2RGB)
+                            tensor = torch.from_numpy(eye_rgb).permute(2, 0, 1).unsqueeze(0).float() / 255.0
+                            with torch.no_grad():
+                                predictiont = self.eye_model(tensor).item()
+                            is_left_closed = predictiont < 0.6
+                            print(f"Prob: {predictiont:.3f} |L Closed: {is_left_closed}")
+                            cv2.imshow("Left eye", eye_crop)
                             
                             #Right eye
-                            rp1 = face_landmarks[33]
-                            rp2 = face_landmarks[160]
-                            rp3 = face_landmarks[158]
-                            rp4 = face_landmarks[133]
-                            rp5 = face_landmarks[153]
-                            rp6 = face_landmarks[144]
-                            A = abs(rp2.y - rp6.y)
-                            B = abs(rp3.y - rp5.y)
-                            C = abs(rp1.x - rp4.x)
-                            self.right_ear = (A + B)/(2*C)
-            
-                            if self.is_ready_to_take_open_ear:
-                                self.left_open_ear_data.append(self.left_ear)
-                                self.right_open_ear_data.append(self.right_ear)
-
-                            if (self.is_ready_to_compute_ear == 1):
-                                #self.left_open_ear = sum(self.left_open_ear_data)/len(self.left_open_ear_data)
-                                #self.right_open_ear = sum(self.right_open_ear_data)/len(self.right_open_ear_data)
-                                self.left_open_ear = max(self.left_open_ear_data)
-                                self.right_open_ear = max(self.right_open_ear_data)
-                                self.is_ready_to_compute_ear += 1
-                                print(self.left_open_ear)
-                                print(self.right_open_ear)
-                            
-                            if self.is_ready_to_compute_ear != 2:
+                            rp1 = 157
+                            rp2 = 161
+                            rp3 = 154
+                            rp4 = 163
+                            r_pts = [rp1, rp2, rp3, rp4]
+                            xs = [int(face_landmarks[i].x * w) for i in r_pts]
+                            ys = [int(face_landmarks[i].y * h) for i in r_pts]
+                            x1, x2 = max(0, min(xs) - self.PAD), min(w, max(xs) + self.PAD)
+                            y1, y2 = max(0, min(ys) - self.PAD), min(h, max(ys) + self.PAD)
+                            eye_crop = frame[y1:y2, x1:x2]
+                            if eye_crop.size == 0:
                                 continue
+                            eye_crop = cv2.resize(eye_crop, (90, 90))
+                            eye_rgb = cv2.cvtColor(eye_crop, cv2.COLOR_BGR2RGB)
+                            tensor = torch.from_numpy(eye_rgb).permute(2, 0, 1).unsqueeze(0).float() / 255.0
+                            with torch.no_grad():
+                                predictiont = self.eye_model(tensor).item()
+                            is_right_closed = predictiont < 0.6
+                            print(f"Prob: {predictiont:.3f} |R Closed: {is_right_closed}")
+                            cv2.imshow("Right eye", eye_crop)
 
-                            is_left_closed = True if self.left_ear < self.left_open_ear * 0.5 else False
-                            is_right_closed = True if self.right_ear < self.right_open_ear * 0.5 else False
+
+
                             #Boths closed
                             if (self.ready_to_blink == False and (is_left_closed) and (is_right_closed)):
-                                print("BOTH CLOSED")
-                                print(f"LEFT DISTANCE: {self.left_ear}")
-                                print(f"RIGHT DISTANCE: {self.right_ear}")
                                 self.eyes_closed_time = current_time
                                 self.ready_to_blink = True
                             #Both opened after closed
                             elif (self.ready_to_blink and (not is_left_closed) and (not is_right_closed)):
-                                print("BOTH OPENED AFTER CLOSE")
                                 self.eyes_opened_time = current_time
                                 if abs(self.eyes_closed_time - self.eyes_opened_time) > CLOSED_OPENED_TIME:
                                     if abs(self.last_left_eye_closed_time - current_time) > CLOSED_OPENED_TIME*0.2 and abs(self.last_right_eye_closed_time - current_time) > CLOSED_OPENED_TIME*0.2:
@@ -158,7 +169,6 @@ class BeathovenTracker():
                                 self.ready_to_blink = False
                             #Left closed right opened
                             elif (is_left_closed and not is_right_closed):
-                                print(f"LEFT CLOSED RIGHT OPENED {self.left_ear}")
                                 self.last_left_eye_closed_time = current_time
                                 if self.left_closed_at_first_time:
                                     self.left_closed_at_first_time = False
@@ -171,14 +181,11 @@ class BeathovenTracker():
                                     DEAD_ZONE = 0.0
                                     SPEED = 5000
                                     if (abs(offset_x) > DEAD_ZONE) or (abs(offset_y) > DEAD_ZONE):
-                                        print(f"OFFSET X: {offset_x}")
-                                        print(f"OFFSET Y: {offset_y}")
                                         lr = int(-offset_x * SPEED)
                                         ud = int(offset_y * SPEED)
                                         pyautogui.moveRel(lr, ud)
                             #Left opened right closed
                             elif (not is_left_closed) and (is_right_closed):
-                                print(f"LEFT OPENED RIGHT CLOSED {self.right_ear}")
                                 self.last_right_eye_closed_time = current_time
                                 if self.right_closed_at_first_time:
                                     self.right_closed_at_first_time = False
@@ -189,17 +196,15 @@ class BeathovenTracker():
                                     if self.can_do_sepcial:
                                         self.right_click_from_blink()
                                         self.can_do_sepcial = False
-                                    print("FIRST")
                                     pass
                             #Take base position
                             elif (not is_left_closed) and (not is_right_closed):
-                                print(f"BOTH OPENED LEFT DISTANCE: {self.left_ear} RIGHT DISTANCE: {self.right_ear}")
                                 self.ready_to_blink = False
                                 self.left_closed_at_first_time = True
                                 self.right_closed_at_first_time = True
                                 self.can_do_sepcial = True
                                 self.normal = (self.last_right_eye_center.x, self.last_right_eye_center.y)
-                                #print(f"NORMAL: {self.normal}")
+
 
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         break
@@ -207,5 +212,5 @@ class BeathovenTracker():
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    my_tracker = BeathovenTracker()
+    my_tracker = BeethovenTracker()
     my_tracker.run_tracker()
