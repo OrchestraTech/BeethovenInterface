@@ -3,7 +3,6 @@ from mediapipe.tasks.python import vision
 import cv2
 import time
 import pyautogui
-import winsound
 import os
 import torch.nn as nn
 import torch
