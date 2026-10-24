@@ -6,7 +6,7 @@ Control your mouse cursor and clicks by blinking, using a webcam and MediaPipe F
 
 How it works
 
-The program tracks the position of eyelids and pupils. Based on the Eye Aspect Ratio (EAR), it determines whether the eye is closed or open.
+The program tracks the position of eyelids and pupils. Based on the CNN, it determines whether the eye is closed or open.
 
 Both eyes closed (for more than 1 sec) -left mouse click.
 Left eye closed (for more than 1 sec) - cursor movement tracking the right pupil.
