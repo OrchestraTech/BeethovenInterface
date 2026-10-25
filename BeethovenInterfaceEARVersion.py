@@ -71,7 +71,7 @@ class BeathovenTracker():
     def run_tracker(self):
         with mp.tasks.vision.FaceLandmarker.create_from_options(self.options) as landmarker:
             if self.running:
-                self.capture = cv2.VideoCapture(1)
+                self.capture = cv2.VideoCapture(0)
             while self.running:
                     current_time = time.time()
                     if abs(current_time - self.ear_time) > 20 and self.is_ready_to_take_open_ear:
