@@ -119,7 +119,7 @@ class BeethovenTracker():
                             tensor = torch.from_numpy(eye_rgb).permute(2, 0, 1).unsqueeze(0).float() / 255.0
                             with torch.no_grad():
                                 predictiont = self.eye_model(tensor).item()
-                            is_left_closed = predictiont < 0.55
+                            is_left_closed = predictiont < 0.6
                             #print(f"Prob: {predictiont:.3f} |L Closed: {is_left_closed}")
                             
                             #Right eye
@@ -140,7 +140,7 @@ class BeethovenTracker():
                             tensor = torch.from_numpy(eye_rgb).permute(2, 0, 1).unsqueeze(0).float() / 255.0
                             with torch.no_grad():
                                 predictiont = self.eye_model(tensor).item()
-                            is_right_closed = predictiont < 0.55
+                            is_right_closed = predictiont < 0.6
                             #print(f"Prob: {predictiont:.3f} |R Closed: {is_right_closed}")
 
                             #Boths closed
