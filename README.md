@@ -22,6 +22,7 @@ pip install mediapipe opencv-python pyautogui torch
 ```
 
 Download the face_landmarker.task model from the official MediaPipe website and place it in the same folder as the script.
+https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
 Also dont forget to put FurEliseNN9717.tar in the same folder as the script.
 
 Run:
