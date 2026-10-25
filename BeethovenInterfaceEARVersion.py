@@ -48,7 +48,7 @@ class BeathovenTracker():
         self.can_do_sepcial = True
 
        
-        model_path = r'C:\Users\Timofei\Desktop\CV\MediaPipeModels\FaceLandmarkerModel\face_landmarker.task'
+        model_path = os.path.join(os.path.dirname(__file__), 'FurEliseNN9717.tar')
         BaseOptions = mp.tasks.BaseOptions
         FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
         VisionRunningMode = mp.tasks.vision.RunningMode
