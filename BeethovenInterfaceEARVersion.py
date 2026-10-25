@@ -6,6 +6,7 @@ import numpy as np
 import time
 import pyautogui
 import winsound
+import os
 
 CLOSED_OPENED_TIME = 1
 
