@@ -210,5 +210,6 @@ class BeathovenTracker():
         cv2.destroyAllWindows()
 
 
-my_tracker = BeathovenTracker()
-my_tracker.run_tracker()
+if __name__ == "__main__":
+    my_tracker = BeathovenTracker()
+    my_tracker.run_tracker()
