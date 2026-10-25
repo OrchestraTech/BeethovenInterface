@@ -5,10 +5,9 @@ import cv2
 import numpy as np
 import time
 import pyautogui
-from BeathovenConsts import *
 import winsound
 
-
+CLOSED_OPENED_TIME = 1
 
 
 pyautogui.FAILSAFE = False
